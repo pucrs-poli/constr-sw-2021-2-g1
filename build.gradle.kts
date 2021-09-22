@@ -18,6 +18,11 @@ repositories {
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
+	implementation("org.keycloak:keycloak-admin-client:15.0.2")
+	implementation("org.springframework.security:spring-security-config")
+	implementation("org.springframework.security:spring-security-oauth2-jose")
+	implementation("org.springframework.security:spring-security-oauth2-client")
+	implementation("org.springframework.security:spring-security-oauth2-resource-server")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")

@@ -1,0 +1,25 @@
+server:
+  port: 8081
+
+keycloak:
+  base: http://localhost:8080/auth
+  realm: master
+  client-id: master-service
+  client-secret: 6c923abc-a643-4765-a7d0-5f6bd6d5c672
+  user: admin
+  pass: Pa55w0rd
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: ${keycloak.client-id}
+            client-secret: ${keycloak.client-secret}
+        provider:
+          keycloak:
+            issuer-uri: ${keycloak.base}/realms/${keycloak.realm}
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${keycloak.base}/realms/${keycloak.realm}/protocol/openid-connect/certs
