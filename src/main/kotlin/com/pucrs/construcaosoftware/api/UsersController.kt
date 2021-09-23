@@ -2,10 +2,13 @@ package com.pucrs.construcaosoftware.api
 
 import org.keycloak.admin.client.Keycloak
 import org.keycloak.representations.idm.UserRepresentation
+import org.springdoc.core.annotations.RouterOperation
+import org.springdoc.core.annotations.RouterOperations
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
+import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.reactive.function.server.RequestPredicates
 import org.springframework.web.reactive.function.server.RouterFunction
 import org.springframework.web.reactive.function.server.RouterFunctions
@@ -15,7 +18,14 @@ import reactor.core.publisher.Mono
 
 @Configuration
 class UsersController {
-
+    @RouterOperations(
+        RouterOperation(path = "/users", method = arrayOf(RequestMethod.POST), beanClass = UsersService::class, beanMethod = "create"),
+        RouterOperation(path = "/users", method = arrayOf(RequestMethod.GET), beanClass = UsersService::class, beanMethod = "list"),
+        RouterOperation(path = "/users/{id}", method = arrayOf(RequestMethod.GET), beanClass = UsersService::class, beanMethod = "get"),
+        RouterOperation(path = "/users/{id}", method = arrayOf(RequestMethod.PUT), beanClass = UsersService::class, beanMethod = "update"),
+        RouterOperation(path = "/users/{id}", method = arrayOf(RequestMethod.PATCH), beanClass = UsersService::class, beanMethod = "updatePassword"),
+        RouterOperation(path = "/users/{id}", method = arrayOf(RequestMethod.DELETE), beanClass = UsersService::class, beanMethod = "delete"),
+    )
     @Bean
     fun routes(usersService: UsersService): RouterFunction<ServerResponse> =
             RouterFunctions.route(RequestPredicates.POST("/users")) { it.bodyToMono(UserDTO::class.java).flatMap { u -> usersService.create(u) }.then(ServerResponse.ok().build()) }

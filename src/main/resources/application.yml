@@ -23,3 +23,7 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: ${keycloak.base}/realms/${keycloak.realm}/protocol/openid-connect/certs
+
+springdoc:
+  swagger-ui:
+    path: /docs
