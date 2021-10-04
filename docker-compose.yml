@@ -18,8 +18,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.keycloak
-    # volumes:
-    #   ./keycloak-initial-setup.sh:/tmp/keycloak.initial-setup.sh:ro
+    volumes:
+      - ./keycloak-initial-setup.sh:/tmp/keycloak.initial-setup.sh
     environment:
       DB_VENDOR: POSTGRES
       DB_ADDR: postgres
