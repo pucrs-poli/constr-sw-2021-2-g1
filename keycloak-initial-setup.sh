@@ -34,6 +34,7 @@ ROLE_ID=$(./kcadm.sh get-roles -r ${REALM_NAME} --rolename ${ROLE_ADMIN_NAME} | 
 ./kcadm.sh add-roles -r ${REALM_NAME} --rid $ROLE_ID --cclientid realm-management --rolename view-users
 ./kcadm.sh add-roles -r ${REALM_NAME} --rid $ROLE_ID --cclientid realm-management --rolename query-users
 ./kcadm.sh add-roles -r ${REALM_NAME} --rid $ROLE_ID --cclientid realm-management --rolename manage-users
+./kcadm.sh add-roles -r ${REALM_NAME} --rid $ROLE_ID --cclientid realm-management --rolename manage-realm
 ./kcadm.sh add-roles -r ${REALM_NAME} --uusername ${USERNAME} --rolename ${ROLE_ADMIN_NAME}
 
 ./kcadm.sh create roles -r ${REALM_NAME} -s name=${ROLE_PROFESSOR_NAME} -o
