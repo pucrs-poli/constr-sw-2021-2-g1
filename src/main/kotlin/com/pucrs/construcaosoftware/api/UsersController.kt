@@ -1,9 +1,15 @@
 package com.pucrs.construcaosoftware.api
 
-import javax.ws.rs.NotFoundException
-import org.keycloak.admin.client.Keycloak
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.Explode
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.enums.ParameterStyle
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
 import org.keycloak.admin.client.CreatedResponseUtil
-import org.keycloak.admin.client.resource.UsersResource
+import org.keycloak.admin.client.Keycloak
 import org.keycloak.representations.idm.CredentialRepresentation
 import org.keycloak.representations.idm.UserRepresentation
 import org.springdoc.core.annotations.RouterOperation
@@ -14,101 +20,184 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.RequestMethod
-import org.springframework.web.reactive.function.server.RequestPredicates
-import org.springframework.web.reactive.function.server.RouterFunction
-import org.springframework.web.reactive.function.server.RouterFunctions
-import org.springframework.web.reactive.function.server.ServerResponse
+import org.springframework.web.reactive.function.server.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import io.swagger.v3.oas.annotations.enums.ParameterIn
-import io.swagger.v3.oas.annotations.enums.Explode
-import io.swagger.v3.oas.annotations.enums.ParameterStyle
-import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.Parameter
-import io.swagger.v3.oas.annotations.parameters.RequestBody
+import javax.ws.rs.NotFoundException
 
 @Configuration
 class UsersController {
     @RouterOperations(
-        RouterOperation(path = "/users", method = arrayOf(RequestMethod.POST), beanClass = UsersService::class, beanMethod = "create"),
-        RouterOperation(path = "/users", method = arrayOf(RequestMethod.GET), beanClass = UsersService::class, beanMethod = "list"),
+        RouterOperation(
+            path = "/users",
+            method = arrayOf(RequestMethod.POST),
+            beanClass = UsersHandler::class,
+            beanMethod = "create",
+            operation = Operation(
+                operationId = "create",
+                method = "POST",
+                requestBody = RequestBody(
+                    required = true,
+                    content = arrayOf(
+                        Content(
+                            schema = Schema(implementation = UserUpdateDTO::class)
+                        )
+                    )
+                )
+            ),
+            consumes = arrayOf("application/json"),
+            produces = arrayOf("application/json")
+        ),
+        RouterOperation(
+            path = "/users",
+            method = arrayOf(RequestMethod.GET),
+            beanClass = UsersHandler::class,
+            beanMethod = "list",
+            produces = arrayOf("application/json")
+        ),
         RouterOperation(
             path = "/users/{id}",
             method = arrayOf(RequestMethod.GET),
-            beanClass = UsersService::class,
+            beanClass = UsersHandler::class,
             beanMethod = "get",
             operation = Operation(
                 operationId = "get",
                 method = "GET",
-                parameters=[Parameter(
+                parameters = [Parameter(
                     name = "id",
                     `in` = ParameterIn.PATH,
                     style = ParameterStyle.SIMPLE,
                     explode = Explode.FALSE,
                     required = true
                 )]
-            )
+            ),
+            produces = arrayOf("application/json")
         ),
         RouterOperation(
             path = "/users/{id}",
             method = arrayOf(RequestMethod.PUT),
-            beanClass = UsersService::class,
+            beanClass = UsersHandler::class,
             beanMethod = "update",
             operation = Operation(
                 operationId = "update",
                 method = "PUT",
-                parameters=[Parameter(
-                    name = "id",
-                    `in` = ParameterIn.PATH,
-                    style = ParameterStyle.SIMPLE,
-                    explode = Explode.FALSE,
-                    required = true
-                )]
-            )
+                requestBody = RequestBody(
+                    required = true,
+                    content = arrayOf(
+                        Content(
+                            schema = Schema(implementation = UserUpdateDTO::class)
+                        )
+                    )
+                ),
+                parameters = arrayOf(
+                    Parameter(
+                        name = "id",
+                        `in` = ParameterIn.PATH,
+                        style = ParameterStyle.SIMPLE,
+                        explode = Explode.FALSE,
+                        required = true
+                    )
+                ),
+            ),
+            consumes = arrayOf("application/json"),
+            produces = arrayOf("application/json")
         ),
         RouterOperation(
             path = "/users/{id}",
             method = arrayOf(RequestMethod.PATCH),
-            beanClass = UsersService::class,
+            beanClass = UsersHandler::class,
             beanMethod = "updatePassword",
             operation = Operation(
                 operationId = "updatePassword",
                 method = "PATCH",
-                parameters=[Parameter(
-                    name = "id",
-                    `in` = ParameterIn.PATH,
-                    style = ParameterStyle.SIMPLE,
-                    explode = Explode.FALSE,
-                    required = true
-                )]
-            )
+                requestBody = RequestBody(
+                    required = true,
+                    content = arrayOf(
+                        Content(
+                            schema = Schema(implementation = UserPartialUpdateDTO::class)
+                        )
+                    )
+                ),
+                parameters = arrayOf(
+                    Parameter(
+                        name = "id",
+                        `in` = ParameterIn.PATH,
+                        style = ParameterStyle.SIMPLE,
+                        explode = Explode.FALSE,
+                        required = true
+                    )
+                ),
+            ),
+            consumes = arrayOf("application/json"),
+            produces = arrayOf("application/json")
         ),
         RouterOperation(
             path = "/users/{id}",
             method = arrayOf(RequestMethod.DELETE),
-            beanClass = UsersService::class,
+            beanClass = UsersHandler::class,
             beanMethod = "delete",
             operation = Operation(
                 operationId = "delete",
                 method = "DELETE",
-                parameters=[Parameter(
+                parameters = [Parameter(
                     name = "id",
                     `in` = ParameterIn.PATH,
                     style = ParameterStyle.SIMPLE,
                     explode = Explode.FALSE,
                     required = true
                 )]
-            )
+            ),
+            produces = arrayOf("application/json")
         ),
     )
     @Bean
-    fun routes(usersService: UsersService): RouterFunction<ServerResponse> =
-            RouterFunctions.route(RequestPredicates.POST("/users")) { it.bodyToMono(UserCreateDTO::class.java).flatMap { u -> usersService.create(u) }.flatMap { u -> ServerResponse.ok().bodyValue(u) } }
-                    .andRoute(RequestPredicates.GET("/users")) { usersService.list().collectList().flatMap { ServerResponse.ok().bodyValue(it) } }
-                    .andRoute(RequestPredicates.GET("/users/{id}")) { usersService.get(it.pathVariable("id")).flatMap { u -> ServerResponse.ok().bodyValue(u) }.switchIfEmpty(ServerResponse.notFound().build()) }
-                    .andRoute(RequestPredicates.PUT("/users/{id}")) { usersService.get(it.pathVariable("id")).flatMap { u -> it.bodyToMono(UserUpdateDTO::class.java).flatMap { dto -> usersService.update(u.id, dto) } }.flatMap { u -> ServerResponse.ok().bodyValue(u) }.switchIfEmpty(ServerResponse.notFound().build()) }
-                    .andRoute(RequestPredicates.PATCH("/users/{id}")) { usersService.get(it.pathVariable("id")).flatMap { u -> it.bodyToMono(UserPartialUpdateDTO::class.java).flatMap { dto -> usersService.updatePassword(u.id, dto) } }.flatMap { u -> ServerResponse.ok().bodyValue(u) }.switchIfEmpty(ServerResponse.notFound().build()) }
-                    .andRoute(RequestPredicates.DELETE("/users/{id}")) { usersService.get(it.pathVariable("id")).flatMap { u -> usersService.delete(u.id) }.flatMap { ServerResponse.noContent().build() }.switchIfEmpty(ServerResponse.notFound().build()) }
+    fun routes(usersService: UsersService, handler: UsersHandler): RouterFunction<ServerResponse> =
+        RouterFunctions.route(RequestPredicates.POST("/users")) {
+            handler.create(it).flatMap { u -> ServerResponse.ok().bodyValue(u) }
+        }
+            .andRoute(RequestPredicates.GET("/users")) {
+                handler.list(it).collectList().flatMap { res -> ServerResponse.ok().bodyValue(res) }
+            }
+            .andRoute(RequestPredicates.GET("/users/{id}")) {
+                handler.get(it).flatMap { u -> ServerResponse.ok().bodyValue(u) }
+                    .switchIfEmpty(ServerResponse.notFound().build())
+            }
+            .andRoute(RequestPredicates.PUT("/users/{id}")) {
+                handler.update(it).flatMap { u -> ServerResponse.ok().bodyValue(u) }
+                    .switchIfEmpty(ServerResponse.notFound().build())
+            }
+            .andRoute(RequestPredicates.PATCH("/users/{id}")) {
+                handler.get(it).flatMap { _ -> handler.updatePassword(it) }
+                    .flatMap { u -> ServerResponse.ok().bodyValue(u) }
+                    .switchIfEmpty(ServerResponse.notFound().build())
+            }
+            .andRoute(RequestPredicates.DELETE("/users/{id}")) {
+                handler.get(it).flatMap { _ -> handler.delete(it) }
+                    .flatMap { ServerResponse.noContent().build() }
+                    .switchIfEmpty(ServerResponse.notFound().build())
+            }
+}
+
+@Component
+class UsersHandler(private val service: UsersService) {
+    fun create(request: ServerRequest) =
+        request.bodyToMono(UserCreateDTO::class.java).flatMap { u -> service.create(u) }
+
+    fun list(request: ServerRequest) = service.list()
+
+    fun get(request: ServerRequest) = service.get(request.pathVariable("id"))
+
+    fun update(request: ServerRequest) =
+        request.bodyToMono(UserUpdateDTO::class.java).flatMap { dto ->
+            service.update(request.pathVariable("id"), dto)
+        }
+
+    fun updatePassword(request: ServerRequest) =
+        request.bodyToMono(UserPartialUpdateDTO::class.java)
+            .flatMap { service.updatePassword(request.pathVariable("id"), it) }
+
+    fun delete(request: ServerRequest) =
+        service.delete(request.pathVariable("id"))
 }
 
 @Service
@@ -123,9 +212,9 @@ class UsersService(private val keycloakClient: KeycloakClient) {
 
 @Component
 class KeycloakClient(
-        private val keycloak: Keycloak,
-        @Value("\${keycloak.realm}") private val realm: String,
-        @Value("\${keycloak.roles}") private val roles: List<String>,
+    private val keycloak: Keycloak,
+    @Value("\${keycloak.realm}") private val realm: String,
+    @Value("\${keycloak.roles}") private val roles: List<String>,
 ) {
 
     fun create(user: UserCreateDTO): Mono<UserDTO> {
@@ -154,19 +243,26 @@ class KeycloakClient(
     }
 
     fun list(): Flux<UserDTO> = Flux.fromIterable(
-        roles.flatMap {
-            role -> keycloak.realm(realm).roles().get(role).roleUserMembers.map {
+        roles.flatMap { role ->
+            keycloak.realm(realm).roles().get(role).roleUserMembers.map {
                 UserDTO(it.id, it.username, role, it.email)
             }
         }
     )
-    
+
     fun get(id: String): Mono<UserDTO> {
         val user = keycloak.realm(realm).users().get(id)
         try {
             val userRepresentation = user.toRepresentation()
-            val role = user.roles().realmLevel().listAll().filter {roles.contains(it.name)}.firstOrNull()
-            return Mono.just(UserDTO(userRepresentation.id, userRepresentation.username, role?.name, userRepresentation.email))
+            val role = user.roles().realmLevel().listAll().filter { roles.contains(it.name) }.firstOrNull()
+            return Mono.just(
+                UserDTO(
+                    userRepresentation.id,
+                    userRepresentation.username,
+                    role?.name,
+                    userRepresentation.email
+                )
+            )
         } catch (e: NotFoundException) {
             return Mono.empty()
         }
@@ -183,10 +279,10 @@ class KeycloakClient(
         userResource.update(userRepresentation)
 
         val realmLevelRoles = userResource.roles().realmLevel()
-        val rolesToRemove = realmLevelRoles.listAll().filter {roles.contains(it.name)}
+        val rolesToRemove = realmLevelRoles.listAll().filter { roles.contains(it.name) }
         realmLevelRoles.remove(rolesToRemove)
         realmLevelRoles.add(listOf(roleToAdd))
-        val currentRole = realmLevelRoles.listAll().filter {roles.contains(it.name)}.firstOrNull()
+        val currentRole = realmLevelRoles.listAll().filter { roles.contains(it.name) }.firstOrNull()
 
         val userR = userResource.toRepresentation()
         return Mono.just(UserDTO(userR.id, userR.username, currentRole?.name, userR.email))
@@ -205,7 +301,8 @@ class KeycloakClient(
         return Mono.just(SuccessDTO(true))
     }
 
-    fun delete(id: String): Mono<SuccessDTO> = Mono.fromCallable { keycloak.realm(realm).users().delete(id) }.then(Mono.just(SuccessDTO(true)))
+    fun delete(id: String): Mono<SuccessDTO> =
+        Mono.fromCallable { keycloak.realm(realm).users().delete(id) }.then(Mono.just(SuccessDTO(true)))
 }
 
 data class UserDTO(
@@ -229,4 +326,4 @@ data class UserUpdateDTO(
 
 data class UserPartialUpdateDTO(val password: String)
 
-data class SuccessDTO (val success: Boolean? = false)
+data class SuccessDTO(val success: Boolean? = false)
