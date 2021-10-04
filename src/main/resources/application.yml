@@ -3,11 +3,12 @@ server:
 
 keycloak:
   base: http://localhost:8080/auth
-  realm: master
-  client-id: master-service
+  realm: pucrs-cs
+  client-id: keyseguro
   client-secret: 6c923abc-a643-4765-a7d0-5f6bd6d5c672
   user: admin
   pass: Pa55w0rd
+  roles: admin, professor, aluno
 
 spring:
   security:
