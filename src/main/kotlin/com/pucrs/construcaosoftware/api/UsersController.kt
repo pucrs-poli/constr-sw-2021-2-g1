@@ -252,20 +252,18 @@ class KeycloakClient(
 
     fun get(id: String): Mono<UserDTO> {
         val user = keycloak.realm(realm).users().get(id)
-        try {
+
+        return Mono.fromCallable {
             val userRepresentation = user.toRepresentation()
             val role = user.roles().realmLevel().listAll().filter { roles.contains(it.name) }.firstOrNull()
-            return Mono.just(
                 UserDTO(
                     userRepresentation.id,
                     userRepresentation.username,
                     role?.name,
                     userRepresentation.email
                 )
-            )
-        } catch (e: NotFoundException) {
-            return Mono.empty()
-        }
+            }
+            .onErrorResume (NotFoundException::class.java) { Mono.empty() }
     }
 
     fun update(id: String, dto: UserUpdateDTO): Mono<UserDTO> {
