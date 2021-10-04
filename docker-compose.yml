@@ -30,3 +30,13 @@ services:
       - 8080:8080
     depends_on:
       - postgres
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - 8081:8081
+    entrypoint: sh -c "sleep 1 && ls setup && ./setup/keycloak-initial-setup.sh && java -jar dockerdemo.jar"
+            # entrypoint: [ "bash", "-c", "sleep 60 && cd /tmp && ./keycloak-initial-setup.sh && java -jar dockerdemo.jar"]
+    depends_on:
+      - keycloak
