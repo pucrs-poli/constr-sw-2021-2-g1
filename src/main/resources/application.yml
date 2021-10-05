@@ -2,7 +2,7 @@ server:
   port: 8081
 
 keycloak:
-  base: http://localhost:8080/auth
+  base: http://keycloak:8080/auth
   realm: pucrs-cs
   client-id: keyseguro
   client-secret: 6c923abc-a643-4765-a7d0-5f6bd6d5c672
