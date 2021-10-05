@@ -15,9 +15,7 @@ services:
       POSTGRES_PASSWORD: password
   keycloak:
     # image: quay.io/keycloak/keycloak:latest
-    build: ./keycloak
-    volumes:
-      - ./keycloak/pucrs-cs-realm.json:/tmp/pucrs-cs-realm.json
+    image: 574344221492.dkr.ecr.sa-east-1.amazonaws.com/keycloak
     environment:
       DB_VENDOR: POSTGRES
       DB_ADDR: postgres
@@ -35,11 +33,9 @@ services:
     depends_on:
       - postgres
   api:
-    image: openjdk:18-jdk-alpine3.13
+    image: 574344221492.dkr.ecr.sa-east-1.amazonaws.com/api:latest
     ports:
       - 8081:8081
-    volumes:
-      - ./build/libs/construcao-software-0.0.1-SNAPSHOT.jar:/tmp/app.jar
-    entrypoint: sh -c "sleep 50 && cd /tmp && java -jar app.jar"
+    entrypoint: sh -c "sleep 50 && java -jar app.jar"
     depends_on:
       - keycloak
