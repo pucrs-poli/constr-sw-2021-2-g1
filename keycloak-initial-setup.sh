@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-SERVER_URL=http://$(hostname -i):8080/auth
+SERVER_URL=http://keycloak:8080/auth
 # KEYCLOAK_USER=admin
 # KEYCLOAK_PASSWORD=Pa55w0rd
 
