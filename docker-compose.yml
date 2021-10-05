@@ -41,6 +41,5 @@ services:
       - ./keycloak-initial-setup.sh:/tmp/keycloak-initial-setup.sh
       - ./build/libs/construcao-software-0.0.1-SNAPSHOT.jar:/tmp/app.jar
     entrypoint: sh -c "sleep 60 && cd /tmp && ./keycloak-initial-setup.sh && java -jar app.jar"
-            # entrypoint: [ "bash", "-c", "sleep 60 && cd /tmp && ./keycloak-initial-setup.sh && java -jar dockerdemo.jar"]
     depends_on:
       - keycloak
