@@ -14,7 +14,7 @@ services:
       - POSTGRES_PASSWORD
       
   keycloak:
-    image: ${ECR_URL}/keycloak
+    image: ${AWS_ECR_URL}/keycloak
     environment:
       - DB_VENDOR
       - DB_ADDR
@@ -31,7 +31,7 @@ services:
       - postgres
 
   api:
-    image: ${ECR_URL}/api:latest
+    image: ${AWS_ECR_URL}/api:latest
     ports:
       - 8081:8081
     depends_on:
