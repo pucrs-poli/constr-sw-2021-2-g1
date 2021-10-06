@@ -1,22 +1,30 @@
 # constr-sw-2021-2-g1
 
+Esta é uma API de autenticação e gerenciamento de usuários que será utilizada para o projeto do semestre.
 
-### Imagens docker
+## Requisitos
 
-### login
-`aws ecr get-login-password --region sa-east-1 | docker login --username AWS --password-stdin 574344221492.dkr.ecr.sa-east-1.amazonaws.com`
+- Alguma JDK na versão 11
+- Alguma IDE, preferencialmente IntelliJ
+- Docker
+- AWS CLI
 
+Para o desenvolvimento, é recomendável subir as imagens Docker do Keycloak e do PostgreSQL, com o comando a seguir:
 
-### image api
+`./deploy-local.sh keycloak`
 
-`docker build  --build-arg JAR_FILE=build/libs/\*.jar  -f Dockerfile.api -t api .`
-`docker tag api:latest 574344221492.dkr.ecr.sa-east-1.amazonaws.com/api:latest`
-`docker push 574344221492.dkr.ecr.sa-east-1.amazonaws.com/api:latest`
+## Deploy
 
+Para fazer deploy local:
 
+`./deploy-local.sh`
 
-### image keycloak
+Para fazer deploy para o ECS:
 
-`docker build -f keycloak/Dockerfile -t keycloak .`
-`docker tag keycloak:latest 574344221492.dkr.ecr.sa-east-1.amazonaws.com/keycloak:latest`
-`docker push 574344221492.dkr.ecr.sa-east-1.amazonaws.com/keycloak:latest`
+`./deploy-ecs.sh`
+
+Para especificar um perfil da AWS, pode ser utilizada a variável de ambiente AWS_PROFILE. Exemplo:
+
+`AWS_PROFILE=trabalho ./deploy-ecs.sh`
+
+O *Docker Compose* lê o arquivo `.env` e repassa as variáveis para os contêineres. A API também lê os arquivos `.env` e `.env-default` (este sendo específico do perfil Spring), para que seja possível subir a API localmente sem configurações extras. Para não haver conflitos, esses arquivos não são copiados para a imagem Docker.

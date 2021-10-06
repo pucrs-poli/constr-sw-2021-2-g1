@@ -2,7 +2,6 @@ version: "3"
 
 volumes:
   postgres_data:
-    driver: local
 
 services:
   postgres:
@@ -10,32 +9,37 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: password
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      
   keycloak:
-    # image: quay.io/keycloak/keycloak:latest
-    image: 574344221492.dkr.ecr.sa-east-1.amazonaws.com/keycloak
+    image: ${ECR_URL}/keycloak
     environment:
-      DB_VENDOR: POSTGRES
-      DB_ADDR: postgres
-      DB_DATABASE: keycloak
-      DB_USER: keycloak
-      DB_SCHEMA: public
-      DB_PASSWORD: password
-      KEYCLOAK_USER: admin
-      KEYCLOAK_PASSWORD: Pa55w0rd
-      KEYCLOAK_IMPORT: /tmp/pucrs-cs-realm.json
-      # Uncomment the line below if you want to specify JDBC parameters. The parameter below is just an example, and it shouldn't be used in production without knowledge. It is highly recommended that you read the PostgreSQL JDBC driver documentation in order to use it.
-      #JDBC_PARAMS: "ssl=true"
+      - DB_VENDOR
+      - DB_ADDR
+      - DB_DATABASE
+      - DB_USER
+      - DB_PASSWORD
+      - DB_SCHEMA
+      - KEYCLOAK_USER
+      - KEYCLOAK_PASSWORD
+      - KEYCLOAK_IMPORT
     ports:
       - 8080:8080
     depends_on:
       - postgres
+
   api:
-    image: 574344221492.dkr.ecr.sa-east-1.amazonaws.com/api:latest
+    image: ${ECR_URL}/api:latest
     ports:
       - 8081:8081
-    entrypoint: sh -c "sleep 50 && java -jar app.jar"
     depends_on:
       - keycloak
+    environment:
+      - KEYCLOAK_URL
+      - KEYCLOAK_USER
+      - KEYCLOAK_PASSWORD
+      - KEYCLOAK_CLIENT_ID
+      - KEYCLOAK_CLIENT_SECRET
+      - KEYCLOAK_REALM

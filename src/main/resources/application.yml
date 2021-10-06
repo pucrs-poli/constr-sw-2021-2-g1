@@ -2,15 +2,17 @@ server:
   port: 8081
 
 keycloak:
-  base: http://keycloak:8080/auth
-  realm: pucrs-cs
-  client-id: keyseguro
-  client-secret: 6c923abc-a643-4765-a7d0-5f6bd6d5c672
-  user: admin
-  pass: Pa55w0rd
+  base: ${KEYCLOAK_URL}
+  realm: ${KEYCLOAK_REALM}
+  client-id: ${KEYCLOAK_CLIENT_ID}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET}
+  user: ${KEYCLOAK_USER}
+  pass: ${KEYCLOAK_PASSWORD}
   roles: admin, professor, aluno
 
 spring:
+  config:
+    import: optional:file:.env[.properties]
   security:
     oauth2:
       client:
