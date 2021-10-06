@@ -4,6 +4,7 @@ source .env
 ECR_IMAGE_API=${AWS_ECR_URL}/api:latest
 ECR_IMAGE_KEYCLOAK=${AWS_ECR_URL}/keycloak:latest
 DOCKER_ECS_CONTEXT=cs-t1
+DOCKER_ECS_PROJECT=cs-t1
 
 aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ECR_URL}
 
@@ -25,4 +26,4 @@ docker push ${ECR_IMAGE_API}
 )
 
 echo Deploying application
-docker --context ${DOCKER_ECS_CONTEXT} compose up
+docker --context ${DOCKER_ECS_CONTEXT} compose --project-name ${DOCKER_ECS_PROJECT} up
