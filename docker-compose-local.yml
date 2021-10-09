@@ -1,0 +1,6 @@
+services:
+  keycloak:
+    build: ./keycloak
+
+  api:
+    build: .

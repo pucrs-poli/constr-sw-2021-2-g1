@@ -14,6 +14,10 @@ group = "com.pucrs"
 version = "0.0.1-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
+tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+	this.archiveFileName.set("${archiveBaseName.get()}.${archiveExtension.get()}")
+}
+
 repositories {
 	mavenCentral()
 }
