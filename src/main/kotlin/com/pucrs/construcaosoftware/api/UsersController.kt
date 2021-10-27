@@ -39,7 +39,7 @@ class UsersController {
                     required = true,
                     content = arrayOf(
                         Content(
-                            schema = Schema(implementation = UserUpdateDTO::class)
+                            schema = Schema(implementation = UserCreateDTO::class)
                         )
                     )
                 )

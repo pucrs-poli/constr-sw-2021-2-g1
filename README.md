@@ -19,7 +19,9 @@ Para fazer deploy local:
 
 `./deploy-local.sh`
 
-Para fazer deploy para o ECS:
+### ECS utilizando Docker Compose
+
+Para fazer deploy para o ECS (Nota, esta implementação usa o Fargate, que não está no *free tier*):
 
 `./deploy-ecs.sh`
 
