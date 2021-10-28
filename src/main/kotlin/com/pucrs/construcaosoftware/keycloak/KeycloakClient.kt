@@ -44,6 +44,22 @@ class KeycloakClient(
         return responseSpec.bodyToMono(TokenDTO::class.java)
     }
 
+    fun refreshToken(refreshToken: String): Mono<TokenDTO> {
+        val formData = LinkedMultiValueMap<String, String>()
+        formData.add("grant_type", "refresh_token")
+        formData.add("client_id", clientId)
+        formData.add("client_secret", clientSecret)
+        formData.add("refresh_token", refreshToken)
+
+        val webClient = WebClient.create(baseUrl)
+        val spec = webClient.post()
+        val bodySpec = spec.uri("/realms/${realm}/protocol/openid-connect/token")
+        val headersSpec = bodySpec.body(BodyInserters.fromFormData(formData))
+        val responseSpec = headersSpec.retrieve()
+
+        return responseSpec.bodyToMono(TokenDTO::class.java)
+    }
+
     fun create(user: UserCreateDTO): Mono<UserDTO> {
         val realmResource = keycloak.realm(realm)
 
