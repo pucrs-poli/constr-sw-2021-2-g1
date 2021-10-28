@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.enums.ParameterStyle
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.parameters.RequestBody
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.springdoc.core.annotations.RouterOperation
 import org.springdoc.core.annotations.RouterOperations
 import org.springframework.context.annotation.Bean
@@ -35,6 +36,7 @@ class UsersController {
             operation = Operation(
                 operationId = "create",
                 method = "POST",
+                security = [SecurityRequirement(name = "Keycloak access-token")],
                 requestBody = RequestBody(
                     required = true,
                     content = arrayOf(
@@ -52,6 +54,11 @@ class UsersController {
             method = arrayOf(RequestMethod.GET),
             beanClass = UsersHandler::class,
             beanMethod = "list",
+            operation = Operation(
+                operationId = "list",
+                method = "GET",
+                security = [SecurityRequirement(name = "Keycloak access-token")],
+            ),
             produces = arrayOf("application/json")
         ),
         RouterOperation(
@@ -62,6 +69,7 @@ class UsersController {
             operation = Operation(
                 operationId = "get",
                 method = "GET",
+                security = [SecurityRequirement(name = "Keycloak access-token")],
                 parameters = [Parameter(
                     name = "id",
                     `in` = ParameterIn.PATH,
@@ -80,6 +88,7 @@ class UsersController {
             operation = Operation(
                 operationId = "update",
                 method = "PUT",
+                security = [SecurityRequirement(name = "Keycloak access-token")],
                 requestBody = RequestBody(
                     required = true,
                     content = arrayOf(
@@ -109,6 +118,7 @@ class UsersController {
             operation = Operation(
                 operationId = "updatePassword",
                 method = "PATCH",
+                security = [SecurityRequirement(name = "Keycloak access-token")],
                 requestBody = RequestBody(
                     required = true,
                     content = arrayOf(
@@ -138,6 +148,7 @@ class UsersController {
             operation = Operation(
                 operationId = "delete",
                 method = "DELETE",
+                security = [SecurityRequirement(name = "Keycloak access-token")],
                 parameters = [Parameter(
                     name = "id",
                     `in` = ParameterIn.PATH,

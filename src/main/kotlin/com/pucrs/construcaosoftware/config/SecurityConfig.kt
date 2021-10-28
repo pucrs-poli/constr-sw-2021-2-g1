@@ -5,15 +5,24 @@ import org.keycloak.admin.client.Keycloak
 import org.keycloak.admin.client.KeycloakBuilder
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
+import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository
 import org.springframework.security.oauth2.client.web.reactive.function.client.ServerOAuth2AuthorizedClientExchangeFilterFunction
 import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizedClientRepository
+import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
+import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers
 import org.springframework.web.reactive.function.client.WebClient
-
+import org.springframework.security.config.Customizer.withDefaults;
+import org.springframework.core.convert.converter.Converter
+import io.swagger.v3.oas.models.OpenAPI
+import io.swagger.v3.oas.models.Components
+import io.swagger.v3.oas.models.security.SecurityScheme
+import reactor.core.publisher.Mono
 
 @EnableWebFluxSecurity
 class SecurityConfig(@Value("\${keycloak.base}") private val baseUrl: String,
@@ -48,18 +57,29 @@ class SecurityConfig(@Value("\${keycloak.base}") private val baseUrl: String,
         // the matcher for all paths that need to be secured (require a logged-in user)
         val apiPathMatcher = ServerWebExchangeMatchers.pathMatchers(API_MATCHER_PATH)
         return http
-                .authorizeExchange().matchers(apiPathMatcher).authenticated()
+                .authorizeExchange().matchers(apiPathMatcher).hasRole("admin")
                 .anyExchange().permitAll()
                 .and().httpBasic().disable()
                 .csrf().disable()
-                .oauth2Client()
-                .and()
-                .oauth2Login()
-                .and()
+                .oauth2ResourceServer {o -> o.jwt {j -> j.jwtAuthenticationConverter(jwtAuthenticationConverter())}}
                 .build()
     }
 
+    fun jwtAuthenticationConverter(): Converter<Jwt, Mono<AbstractAuthenticationToken>> {
+        val converter = JwtAuthenticationConverter()
+        converter.setJwtGrantedAuthoritiesConverter(KeycloakRealmRoleConverter())
+        return ReactiveJwtAuthenticationConverterAdapter(converter)
+    }
+
+    @Bean
+    fun customOpenAPI() = OpenAPI().components(
+        Components().addSecuritySchemes(
+            "Keycloak access-token",
+            SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")
+        )
+    )
+
     companion object {
-        const val API_MATCHER_PATH = "*"
+        const val API_MATCHER_PATH = "/users/**"
     }
 }
