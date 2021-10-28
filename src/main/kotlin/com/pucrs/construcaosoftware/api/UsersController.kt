@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.enums.ParameterStyle
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.parameters.RequestBody
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.springdoc.core.annotations.RouterOperation
 import org.springdoc.core.annotations.RouterOperations
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.reactive.function.server.*
+import org.springframework.web.util.UriComponentsBuilder
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import com.pucrs.construcaosoftware.keycloak.KeycloakClient
@@ -44,10 +46,11 @@ class UsersController {
                             schema = Schema(implementation = UserCreateDTO::class)
                         )
                     )
-                )
+                ),
+                responses = [ApiResponse(responseCode = "201", description = "Created")],
             ),
             consumes = arrayOf("application/json"),
-            produces = arrayOf("application/json")
+            produces = arrayOf("application/json"),
         ),
         RouterOperation(
             path = "/users",
@@ -161,9 +164,12 @@ class UsersController {
         ),
     )
     @Bean
-    fun usersRoutes(usersService: UsersService, handler: UsersHandler): RouterFunction<ServerResponse> =
+    fun usersRoutes(handler: UsersHandler): RouterFunction<ServerResponse> =
         RouterFunctions.route(RequestPredicates.POST("/users")) {
-            handler.create(it).flatMap { u -> ServerResponse.ok().bodyValue(u) }
+            handler.create(it).flatMap { u -> ServerResponse
+                .created(UriComponentsBuilder.fromUriString("/users/${u.id}").build().toUri())
+                .bodyValue(u)
+            }
         }
             .andRoute(RequestPredicates.GET("/users")) {
                 handler.list(it).collectList().flatMap { res -> ServerResponse.ok().bodyValue(res) }
