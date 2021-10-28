@@ -2,6 +2,7 @@ package com.pucrs.construcaosoftware.api
 
 import com.pucrs.construcaosoftware.dto.LoginDTO
 import com.pucrs.construcaosoftware.dto.TokenDTO
+import com.pucrs.construcaosoftware.dto.RefreshTokenDTO
 import com.pucrs.construcaosoftware.keycloak.KeycloakClient
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -27,24 +28,42 @@ import org.springframework.http.MediaType
 class AuthController {
   @RouterOperations(
     RouterOperation(
-      path = "/login",
-      method = arrayOf(RequestMethod.POST),
-      beanClass = AuthHandler::class,
-      beanMethod = "login",
-      operation = Operation(
-          operationId = "create",
-          method = "POST",
-          requestBody = RequestBody(
-              required = true,
-              content = arrayOf(
-                  Content(
-                      schema = Schema(implementation = LoginDTO::class)
-                  )
-              )
-          )
-      ),
+        path = "/login",
+        method = arrayOf(RequestMethod.POST),
+        beanClass = AuthHandler::class,
+        beanMethod = "login",
+        operation = Operation(
+            operationId = "create",
+            method = "POST",
+            requestBody = RequestBody(
+                required = true,
+                content = arrayOf(
+                    Content(
+                        schema = Schema(implementation = LoginDTO::class)
+                    )
+                )
+            )
+        ),
+    ),
+    RouterOperation(
+        path = "/refresh_token",
+        method = arrayOf(RequestMethod.POST),
+        beanClass = AuthHandler::class,
+        beanMethod = "refreshToken",
+        operation = Operation(
+            operationId = "refreshToken",
+            method = "POST",
+            requestBody = RequestBody(
+                required = true,
+                content = arrayOf(
+                    Content(
+                        schema = Schema(implementation = RefreshTokenDTO::class)
+                    )
+                )
+            )
+        ),
+    ),
     )
-  )
   @Bean
   fun authRoutes(handler: AuthHandler): RouterFunction<ServerResponse> =
     RouterFunctions.route(RequestPredicates.POST("/login")) {
@@ -58,14 +77,27 @@ class AuthController {
                 .bodyValue(e.responseBodyAsString)
         }
     }
+        .andRoute(RequestPredicates.POST("/refresh_token")) {
+            handler.refreshToken(it).flatMap{ r ->
+                ServerResponse.ok().bodyValue(r)
+            }
+            .onErrorResume(WebClientResponseException::class.java) { e ->
+                ServerResponse
+                    .status(e.statusCode)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(e.responseBodyAsString)
+            }
+        }
 }
 
 @Component
 class AuthHandler(private val service: AuthService) {
-  fun login(request: ServerRequest) = request.bodyToMono(LoginDTO::class.java).flatMap { u -> service.login(u) }
+    fun login(request: ServerRequest) = request.bodyToMono(LoginDTO::class.java).flatMap { u -> service.login(u) }
+    fun refreshToken(request: ServerRequest) = request.bodyToMono(RefreshTokenDTO::class.java).flatMap { u -> service.refreshToken(u) }
 }
 
 @Service
 class AuthService(private val keycloakClient: KeycloakClient) {
-  fun login(dto: LoginDTO): Mono<TokenDTO> = keycloakClient.login(dto.username, dto.password)
+    fun login(dto: LoginDTO): Mono<TokenDTO> = keycloakClient.login(dto.username, dto.password)
+    fun refreshToken(dto: RefreshTokenDTO): Mono<TokenDTO> = keycloakClient.refreshToken(dto.refresh_token)
 }

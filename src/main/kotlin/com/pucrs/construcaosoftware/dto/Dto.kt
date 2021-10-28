@@ -25,7 +25,13 @@ data class SuccessDTO(val success: Boolean? = false)
 
 data class TokenDTO(
     val access_token: String? = null,
-    val expires_in: Int? = null
+    val expires_in: Int? = null,
+    val refresh_token: String? = null,
+    val refresh_expires_in: Int? = null,
+)
+
+data class RefreshTokenDTO(
+    val refresh_token: String,
 )
 
 data class LoginDTO(
