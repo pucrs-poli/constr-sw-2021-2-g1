@@ -28,13 +28,14 @@ import org.springframework.http.MediaType
 class AuthController {
     @RouterOperations(
         RouterOperation(
-            path = "/login",
+            path = "/auth/login",
             method = arrayOf(RequestMethod.POST),
             beanClass = AuthHandler::class,
             beanMethod = "login",
             operation = Operation(
                 operationId = "create",
                 method = "POST",
+                summary = "Login",
                 requestBody = RequestBody(
                     required = true,
                     content = arrayOf(
@@ -46,13 +47,14 @@ class AuthController {
             ),
         ),
         RouterOperation(
-            path = "/refresh_token",
+            path = "/auth/refresh_token",
             method = arrayOf(RequestMethod.POST),
             beanClass = AuthHandler::class,
             beanMethod = "refreshToken",
             operation = Operation(
                 operationId = "refreshToken",
                 method = "POST",
+                summary = "Informe o refresh_token obtido no login para obter um novo token",
                 requestBody = RequestBody(
                     required = true,
                     content = arrayOf(
@@ -64,19 +66,20 @@ class AuthController {
             ),
         ),
         RouterOperation(
-            path = "/certs",
+            path = "/auth/certs",
             method = arrayOf(RequestMethod.GET),
             beanClass = AuthHandler::class,
             beanMethod = "certs",
             operation = Operation(
                 operationId = "certs",
-                method = "GET"
+                method = "GET",
+                summary = "Recupera as chaves públicas do servidor, no formato JWK, para validação dos tokens",
             ),
         ),
     )
   @Bean
   fun authRoutes(handler: AuthHandler): RouterFunction<ServerResponse> =
-    RouterFunctions.route(RequestPredicates.POST("/login")) {
+    RouterFunctions.route(RequestPredicates.POST("/auth/login")) {
         handler.login(it).flatMap{ r ->
           ServerResponse.ok().bodyValue(r)
         }
@@ -87,7 +90,7 @@ class AuthController {
                 .bodyValue(e.responseBodyAsString)
         }
     }
-        .andRoute(RequestPredicates.POST("/refresh_token")) {
+        .andRoute(RequestPredicates.POST("/auth/refresh_token")) {
             handler.refreshToken(it).flatMap{ r ->
                 ServerResponse.ok().bodyValue(r)
             }
@@ -98,7 +101,7 @@ class AuthController {
                     .bodyValue(e.responseBodyAsString)
             }
         }
-        .andRoute(RequestPredicates.GET("/certs")) {
+        .andRoute(RequestPredicates.GET("/auth/certs")) {
             handler.certs(it).flatMap{ r ->
                 ServerResponse.ok().bodyValue(r)
             }
