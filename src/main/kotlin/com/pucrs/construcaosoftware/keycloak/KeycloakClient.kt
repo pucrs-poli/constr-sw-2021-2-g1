@@ -60,6 +60,15 @@ class KeycloakClient(
         return responseSpec.bodyToMono(TokenDTO::class.java)
     }
 
+    fun certs(): Mono<Any> {
+        val webClient = WebClient.create(baseUrl)
+        val spec = webClient.get()
+        val bodySpec = spec.uri("/realms/${realm}/protocol/openid-connect/certs")
+        val responseSpec = bodySpec.retrieve()
+
+        return responseSpec.bodyToMono(Any::class.java)
+    }
+
     fun create(user: UserCreateDTO): Mono<UserDTO> {
         val realmResource = keycloak.realm(realm)
 

@@ -26,43 +26,53 @@ import org.springframework.http.MediaType
 
 @Configuration
 class AuthController {
-  @RouterOperations(
-    RouterOperation(
-        path = "/login",
-        method = arrayOf(RequestMethod.POST),
-        beanClass = AuthHandler::class,
-        beanMethod = "login",
-        operation = Operation(
-            operationId = "create",
-            method = "POST",
-            requestBody = RequestBody(
-                required = true,
-                content = arrayOf(
-                    Content(
-                        schema = Schema(implementation = LoginDTO::class)
+    @RouterOperations(
+        RouterOperation(
+            path = "/login",
+            method = arrayOf(RequestMethod.POST),
+            beanClass = AuthHandler::class,
+            beanMethod = "login",
+            operation = Operation(
+                operationId = "create",
+                method = "POST",
+                requestBody = RequestBody(
+                    required = true,
+                    content = arrayOf(
+                        Content(
+                            schema = Schema(implementation = LoginDTO::class)
+                        )
                     )
                 )
-            )
+            ),
         ),
-    ),
-    RouterOperation(
-        path = "/refresh_token",
-        method = arrayOf(RequestMethod.POST),
-        beanClass = AuthHandler::class,
-        beanMethod = "refreshToken",
-        operation = Operation(
-            operationId = "refreshToken",
-            method = "POST",
-            requestBody = RequestBody(
-                required = true,
-                content = arrayOf(
-                    Content(
-                        schema = Schema(implementation = RefreshTokenDTO::class)
+        RouterOperation(
+            path = "/refresh_token",
+            method = arrayOf(RequestMethod.POST),
+            beanClass = AuthHandler::class,
+            beanMethod = "refreshToken",
+            operation = Operation(
+                operationId = "refreshToken",
+                method = "POST",
+                requestBody = RequestBody(
+                    required = true,
+                    content = arrayOf(
+                        Content(
+                            schema = Schema(implementation = RefreshTokenDTO::class)
+                        )
                     )
                 )
-            )
+            ),
         ),
-    ),
+        RouterOperation(
+            path = "/certs",
+            method = arrayOf(RequestMethod.GET),
+            beanClass = AuthHandler::class,
+            beanMethod = "certs",
+            operation = Operation(
+                operationId = "certs",
+                method = "GET"
+            ),
+        ),
     )
   @Bean
   fun authRoutes(handler: AuthHandler): RouterFunction<ServerResponse> =
@@ -88,16 +98,29 @@ class AuthController {
                     .bodyValue(e.responseBodyAsString)
             }
         }
+        .andRoute(RequestPredicates.GET("/certs")) {
+            handler.certs(it).flatMap{ r ->
+                ServerResponse.ok().bodyValue(r)
+            }
+            .onErrorResume(WebClientResponseException::class.java) { e ->
+                ServerResponse
+                    .status(e.statusCode)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(e.responseBodyAsString)
+            }
+        }
 }
 
 @Component
 class AuthHandler(private val service: AuthService) {
     fun login(request: ServerRequest) = request.bodyToMono(LoginDTO::class.java).flatMap { u -> service.login(u) }
     fun refreshToken(request: ServerRequest) = request.bodyToMono(RefreshTokenDTO::class.java).flatMap { u -> service.refreshToken(u) }
+    fun certs(request: ServerRequest) = service.certs()
 }
 
 @Service
 class AuthService(private val keycloakClient: KeycloakClient) {
     fun login(dto: LoginDTO): Mono<TokenDTO> = keycloakClient.login(dto.username, dto.password)
     fun refreshToken(dto: RefreshTokenDTO): Mono<TokenDTO> = keycloakClient.refreshToken(dto.refresh_token)
+    fun certs(): Mono<Any> = keycloakClient.certs()
 }
