@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-@OpenAPIDefinition(info = Info(title = "API", version = "1.0", description = "vamo ve essa coisa"))
+@OpenAPIDefinition(info = Info(title = "Keyseguro", version = "1.0.3", description = "API de autenticação e gerenciamento de usuários"))
 class ConstrucaoSoftwareApplication
 
 fun main(args: Array<String>) {
