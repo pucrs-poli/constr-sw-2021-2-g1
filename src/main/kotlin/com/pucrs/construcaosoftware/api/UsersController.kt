@@ -38,6 +38,7 @@ class UsersController {
             operation = Operation(
                 operationId = "create",
                 method = "POST",
+                summary = "Cria um novo usuário",
                 security = [SecurityRequirement(name = "Keycloak access-token")],
                 requestBody = RequestBody(
                     required = true,
@@ -60,6 +61,7 @@ class UsersController {
             operation = Operation(
                 operationId = "list",
                 method = "GET",
+                summary = "Lista todos os usuários",
                 security = [SecurityRequirement(name = "Keycloak access-token")],
             ),
             produces = arrayOf("application/json")
@@ -72,6 +74,7 @@ class UsersController {
             operation = Operation(
                 operationId = "get",
                 method = "GET",
+                summary = "Recupera um usuário pelo ID",
                 security = [SecurityRequirement(name = "Keycloak access-token")],
                 parameters = [Parameter(
                     name = "id",
@@ -91,6 +94,7 @@ class UsersController {
             operation = Operation(
                 operationId = "update",
                 method = "PUT",
+                summary = "Atualiza um usuário pelo ID",
                 security = [SecurityRequirement(name = "Keycloak access-token")],
                 requestBody = RequestBody(
                     required = true,
@@ -121,6 +125,7 @@ class UsersController {
             operation = Operation(
                 operationId = "updatePassword",
                 method = "PATCH",
+                summary = "Atualiza a senha do usuário",
                 security = [SecurityRequirement(name = "Keycloak access-token")],
                 requestBody = RequestBody(
                     required = true,
@@ -151,6 +156,7 @@ class UsersController {
             operation = Operation(
                 operationId = "delete",
                 method = "DELETE",
+                summary = "Exclui um usuário pelo ID",
                 security = [SecurityRequirement(name = "Keycloak access-token")],
                 parameters = [Parameter(
                     name = "id",

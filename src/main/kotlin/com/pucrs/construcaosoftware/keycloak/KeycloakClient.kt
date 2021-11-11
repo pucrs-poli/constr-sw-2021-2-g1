@@ -1,6 +1,9 @@
 package com.pucrs.construcaosoftware.keycloak
 
 import com.pucrs.construcaosoftware.dto.*
+import com.pucrs.construcaosoftware.exceptions.InvalidDataException
+import org.apache.http.HttpStatus
+import javax.ws.rs.NotFoundException
 import org.keycloak.admin.client.CreatedResponseUtil
 import org.keycloak.admin.client.Keycloak
 import org.keycloak.representations.idm.CredentialRepresentation
@@ -10,23 +13,23 @@ import org.springframework.stereotype.Component
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import javax.ws.rs.NotFoundException
 
 @Component
 class KeycloakClient(
-    private val keycloak: Keycloak,
-    @Value("\${keycloak.realm}") private val realm: String,
-    @Value("\${keycloak.roles}") private val roles: List<String>,
-    @Value("\${keycloak.base}") private val baseUrl: String,
-    @Value("\${keycloak.client-id}") private val clientId: String,
-    @Value("\${keycloak.client-secret}") private val clientSecret: String
+        private val keycloak: Keycloak,
+        @Value("\${keycloak.realm}") private val realm: String,
+        @Value("\${keycloak.roles}") private val roles: List<String>,
+        @Value("\${keycloak.base}") private val baseUrl: String,
+        @Value("\${keycloak.client-id}") private val clientId: String,
+        @Value("\${keycloak.client-secret}") private val clientSecret: String
 ) {
 
     fun login(
-        username: String,
-        password: String,
+            username: String,
+            password: String,
     ): Mono<TokenDTO> {
         val formData = LinkedMultiValueMap<String, String>()
         formData.add("grant_type", "password")
@@ -60,6 +63,48 @@ class KeycloakClient(
         return responseSpec.bodyToMono(TokenDTO::class.java)
     }
 
+    fun evaluatePermission(userToken: String, resource: String, scope: String): Mono<Any> {
+        if (resource.isEmpty()) {
+            throw InvalidDataException("Invalid resource")
+        }
+        if (scope.isEmpty() || scope.contains(",")) {
+            throw InvalidDataException("Invalid scope")
+        }
+
+        val formData = LinkedMultiValueMap<String, String>()
+        formData.add("grant_type", "urn:ietf:params:oauth:grant-type:uma-ticket")
+        formData.add("client_id", clientId)
+        formData.add("client_secret", clientSecret)
+        formData.add("audience", clientId)
+        formData.add("response_mode", "decision")
+        formData.add("permission", "${resource}#${scope}")
+        formData.add("subject_token", userToken)
+
+        val webClient = WebClient.create(baseUrl)
+        val spec = webClient.post()
+        val bodySpec = spec.uri("/realms/${realm}/protocol/openid-connect/token")
+        val headersSpec = bodySpec.body(BodyInserters.fromFormData(formData))
+        val responseSpec = headersSpec.retrieve()
+
+        return responseSpec.bodyToMono(Any::class.java)
+            // .onErrorResume(WebClientResponseException::class.java) {
+            //     if (it.rawStatusCode == 403) {
+            //         Mono.just(mapOf("result" to false))
+            //     } else {
+            //         Mono.error(it)
+            //     }
+            // }
+    }
+
+    fun certs(): Mono<Any> {
+        val webClient = WebClient.create(baseUrl)
+        val spec = webClient.get()
+        val bodySpec = spec.uri("/realms/${realm}/protocol/openid-connect/certs")
+        val responseSpec = bodySpec.retrieve()
+
+        return responseSpec.bodyToMono(Any::class.java)
+    }
+
     fun create(user: UserCreateDTO): Mono<UserDTO> {
         val realmResource = keycloak.realm(realm)
 
@@ -85,28 +130,34 @@ class KeycloakClient(
         return Mono.just(UserDTO(userId, user.username, user.role, user.email))
     }
 
-    fun list(): Flux<UserDTO> = Flux.fromIterable(
-        roles.flatMap { role ->
-            keycloak.realm(realm).roles().get(role).roleUserMembers.map {
-                UserDTO(it.id, it.username, role, it.email)
-            }
-        }
-    )
+    fun list(): Flux<UserDTO> =
+            Flux.fromIterable(
+                    roles.flatMap { role ->
+                        keycloak.realm(realm).roles().get(role).roleUserMembers.map {
+                            UserDTO(it.id, it.username, role, it.email)
+                        }
+                    }
+            )
 
     fun get(id: String): Mono<UserDTO> {
         val user = keycloak.realm(realm).users().get(id)
 
         return Mono.fromCallable {
             val userRepresentation = user.toRepresentation()
-            val role = user.roles().realmLevel().listAll().filter { roles.contains(it.name) }.firstOrNull()
+            val role =
+                    user.roles()
+                            .realmLevel()
+                            .listAll()
+                            .filter { roles.contains(it.name) }
+                            .firstOrNull()
             UserDTO(
-                userRepresentation.id,
-                userRepresentation.username,
-                role?.name,
-                userRepresentation.email
+                    userRepresentation.id,
+                    userRepresentation.username,
+                    role?.name,
+                    userRepresentation.email
             )
         }
-            .onErrorResume (NotFoundException::class.java) { Mono.empty() }
+                .onErrorResume(NotFoundException::class.java) { Mono.empty() }
     }
 
     fun update(id: String, dto: UserUpdateDTO): Mono<UserDTO> {
@@ -143,5 +194,6 @@ class KeycloakClient(
     }
 
     fun delete(id: String): Mono<SuccessDTO> =
-        Mono.fromCallable { keycloak.realm(realm).users().delete(id) }.then(Mono.just(SuccessDTO(true)))
+            Mono.fromCallable { keycloak.realm(realm).users().delete(id) }
+                    .then(Mono.just(SuccessDTO(true)))
 }
