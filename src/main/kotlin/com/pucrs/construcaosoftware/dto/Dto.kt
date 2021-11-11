@@ -38,3 +38,9 @@ data class LoginDTO(
   val username: String,
   val password: String,
 )
+
+data class EvaluatePermissionDTO(
+    val userToken: String,
+    val resource: String,
+    val scope: String,
+)

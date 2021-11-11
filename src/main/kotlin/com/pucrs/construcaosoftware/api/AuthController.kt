@@ -3,7 +3,9 @@ package com.pucrs.construcaosoftware.api
 import com.pucrs.construcaosoftware.dto.LoginDTO
 import com.pucrs.construcaosoftware.dto.TokenDTO
 import com.pucrs.construcaosoftware.dto.RefreshTokenDTO
+import com.pucrs.construcaosoftware.dto.EvaluatePermissionDTO
 import com.pucrs.construcaosoftware.keycloak.KeycloakClient
+import com.pucrs.construcaosoftware.exceptions.InvalidDataException
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.bind.annotation.RequestMethod
@@ -23,6 +25,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.parameters.RequestBody
 import org.springframework.http.MediaType
+import kotlin.collections.mapOf
 
 @Configuration
 class AuthController {
@@ -76,6 +79,25 @@ class AuthController {
                 summary = "Recupera as chaves públicas do servidor, no formato JWK, para validação dos tokens",
             ),
         ),
+        RouterOperation(
+            path = "/auth/evaluate_permission",
+            method = arrayOf(RequestMethod.POST),
+            beanClass = AuthHandler::class,
+            beanMethod = "evaluatePermission",
+            operation = Operation(
+                operationId = "evaluatePermission",
+                method = "POST",
+                summary = "Verifica se o usuário tem permissão para acessar determinada rota",
+                requestBody = RequestBody(
+                    required = true,
+                    content = arrayOf(
+                        Content(
+                            schema = Schema(implementation = EvaluatePermissionDTO::class)
+                        )
+                    )
+                )
+            ),
+        )
     )
   @Bean
   fun authRoutes(handler: AuthHandler): RouterFunction<ServerResponse> =
@@ -112,6 +134,22 @@ class AuthController {
                     .bodyValue(e.responseBodyAsString)
             }
         }
+        .andRoute(RequestPredicates.POST("/auth/evaluate_permission")) {
+            handler.evaluatePermission(it).flatMap{ r ->
+                ServerResponse.ok().bodyValue(r)
+            }
+            .onErrorResume(WebClientResponseException::class.java) { e ->
+                ServerResponse
+                    .status(e.statusCode)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(e.responseBodyAsString)
+            }.onErrorResume(InvalidDataException::class.java) { e ->
+                ServerResponse
+                    .status(400)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(mapOf("error" to e.message))
+            }
+        }
 }
 
 @Component
@@ -119,6 +157,7 @@ class AuthHandler(private val service: AuthService) {
     fun login(request: ServerRequest) = request.bodyToMono(LoginDTO::class.java).flatMap { u -> service.login(u) }
     fun refreshToken(request: ServerRequest) = request.bodyToMono(RefreshTokenDTO::class.java).flatMap { u -> service.refreshToken(u) }
     fun certs(request: ServerRequest) = service.certs()
+    fun evaluatePermission(request: ServerRequest) = request.bodyToMono(EvaluatePermissionDTO::class.java).flatMap { u -> service.evaluatePermission(u) }
 }
 
 @Service
@@ -126,4 +165,5 @@ class AuthService(private val keycloakClient: KeycloakClient) {
     fun login(dto: LoginDTO): Mono<TokenDTO> = keycloakClient.login(dto.username, dto.password)
     fun refreshToken(dto: RefreshTokenDTO): Mono<TokenDTO> = keycloakClient.refreshToken(dto.refresh_token)
     fun certs(): Mono<Any> = keycloakClient.certs()
+    fun evaluatePermission(dto: EvaluatePermissionDTO): Mono<Any> = keycloakClient.evaluatePermission(dto.userToken, dto.resource, dto.scope)
 }
